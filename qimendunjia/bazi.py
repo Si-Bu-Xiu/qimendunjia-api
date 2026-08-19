@@ -670,14 +670,20 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
 
         gan_wx, gan_yy = TIANGAN_WUXING_YINYANG[gan]
         zhi_wx, zhi_yy = DIZHI_WUXING_YINYANG[zhi]
-        main_shishen = get_shishen(day_master, gan)
+
+        if position == 'day':
+            main_shishen = '日元'
+            liuqin = '自身'
+        else:
+            main_shishen = get_shishen(day_master, gan)
+            liuqin = get_liuqin(main_shishen, gender)
 
         pillar = {
             'position': position,
             'gan': gan,
             'zhi': zhi,
             'shishen': main_shishen,
-            'liuqin': get_liuqin(main_shishen, gender),
+            'liuqin': liuqin,
             'gan_wuxing': gan_wx,
             'gan_yinyang': gan_yy,
             'zhi_wuxing': zhi_wx,

@@ -3,6 +3,10 @@ from .core import TIANGAN, DIZHI
 from .location import apply_true_solar_time
 
 
+# 六十甲子完整序列（用于流年、大运等推算）
+GANZHI_60 = [TIANGAN[i % 10] + DIZHI[i % 12] for i in range(60)]
+
+
 SHI_SHEN = {
     '甲': {'甲': '比肩', '乙': '劫财', '丙': '食神', '丁': '伤官', '戊': '偏财',
            '己': '正财', '庚': '七杀', '辛': '正官', '壬': '偏印', '癸': '正印'},
@@ -226,19 +230,33 @@ def calculate_daxun(year_gz, gender):
     return daxun
 
 
-def determine_pattern(month_gz, year_gz, hour_gz):
+def determine_pattern(day_master, month_gz, year_gz, hour_gz):
+    """
+    判定月令格局。
+
+    子平法以月支本气取格；若月支藏干透出年干或时干，则以透干之十神取格。
+    格局名按十神转换：正官、七杀、正印、偏印、正财、偏财、食神、伤官。
+    """
     month_zhi = month_gz[1]
     cang = CANG_GAN[month_zhi]
 
     year_gan = year_gz[0]
     hour_gan = hour_gz[0]
 
-    if cang[0] == year_gan or cang[0] == hour_gan:
-        return cang[0] + '格'
-    elif len(cang) > 1 and cang[1] == year_gan or (len(cang) > 1 and cang[1] == hour_gan):
-        return cang[1] + '格'
-    else:
-        return cang[0] + '格'
+    # 优先看月支藏干是否透出于年/时干
+    selected_gan = cang[0]  # 默认取本气
+    for cg in cang:
+        if cg == year_gan or cg == hour_gan:
+            selected_gan = cg
+            break
+
+    shishen = get_shishen(day_master, selected_gan)
+    # 比肩劫财不入格，退而求其次取月令本气
+    if shishen in ('比肩', '劫财'):
+        selected_gan = cang[0]
+        shishen = get_shishen(day_master, selected_gan)
+
+    return shishen + '格'
 
 
 def determine_yong_ji(day_master, month_gz, day_gan, year_gz, hour_gz):
@@ -478,6 +496,142 @@ def get_global_shensha(day_gz, year_gan):
     return global_shensha
 
 
+def get_ri_gui(day_gz):
+    """查日贵：丁酉、丁亥、癸巳、癸卯四日。"""
+    return day_gz in ['丁酉', '丁亥', '癸巳', '癸卯']
+
+
+def get_ri_de(day_gz):
+    """查日德：甲寅、戊辰、丙辰、庚辰、壬戌。"""
+    return day_gz in ['甲寅', '戊辰', '丙辰', '庚辰', '壬戌']
+
+
+def get_kuigang(day_gz):
+    """查魁罡：壬辰、庚戌、戊戌、庚辰。"""
+    return day_gz in ['壬辰', '庚戌', '戊戌', '庚辰']
+
+
+def get_jinshen(hour_gz):
+    """查时上金神：癸酉、己巳、乙丑三时。"""
+    return hour_gz in ['癸酉', '己巳', '乙丑']
+
+
+def get_ri_ren(day_gz):
+    """查日刃：戊午、丙午、壬子。"""
+    return day_gz in ['戊午', '丙午', '壬子']
+
+
+def get_yangren_by_gan(day_gan, zhi):
+    """判断某地支是否为日干之阳刃。"""
+    return zhi == get_yangren(day_gan)
+
+
+def get_liuqin(shishen, gender='男'):
+    """
+    根据十神推导六亲关系。
+
+    男命：正财为妻、偏财为父/妾、正印为母、正官为女、七杀为子、
+          食神为孙、伤官为孙女/祖母、比肩为兄弟、劫财为姐妹。
+    女命：正官为夫、七杀为偏夫、正印为母、偏财为父、食神为男、伤官为女、
+          比肩为姐妹、劫财为兄弟。
+    """
+    if gender == '男':
+        liuqin_map = {
+            '正财': '妻',
+            '偏财': '父',
+            '正印': '母',
+            '偏印': '祖父',
+            '正官': '女',
+            '七杀': '子',
+            '食神': '孙',
+            '伤官': '孙女',
+            '比肩': '兄弟',
+            '劫财': '姐妹',
+        }
+    else:
+        liuqin_map = {
+            '正官': '夫',
+            '七杀': '偏夫',
+            '正印': '母',
+            '偏印': '祖父',
+            '正财': '妻财',
+            '偏财': '父',
+            '食神': '男',
+            '伤官': '女',
+            '比肩': '姐妹',
+            '劫财': '兄弟',
+        }
+    return liuqin_map.get(shishen, '')
+
+
+def get_taiyuan(year_gz, month_gz):
+    """
+    计算胎元。
+
+    胎元 = 月柱天干进一位，地支进三位。
+    如月柱为丙寅，则胎元为丁巳。
+    """
+    gan_idx = TIANGAN.index(month_gz[0])
+    zhi_idx = DIZHI.index(month_gz[1])
+    taiyuan_gan = TIANGAN[(gan_idx + 1) % 10]
+    taiyuan_zhi = DIZHI[(zhi_idx + 3) % 12]
+    return taiyuan_gan + taiyuan_zhi
+
+
+def get_minggong(month_zhi, hour_zhi):
+    """
+    计算命宫地支。
+
+    子平法：以生月之宫与生时之宫相加，用 14 或 26 减之，余数安命。
+    寅=1，卯=2... 子=11，丑=12。
+
+    Args:
+        month_zhi (str): 月支
+        hour_zhi (str): 时支
+
+    Returns:
+        str: 命宫地支
+    """
+    zhi_num = {'寅': 1, '卯': 2, '辰': 3, '巳': 4, '午': 5, '未': 6,
+               '申': 7, '酉': 8, '戌': 9, '亥': 10, '子': 11, '丑': 12}
+    num_to_zhi = {v: k for k, v in zhi_num.items()}
+
+    total = zhi_num[month_zhi] + zhi_num[hour_zhi]
+    if total <= 14:
+        ming_num = 14 - total
+    else:
+        ming_num = 26 - total
+
+    # 调整到 1-12 范围
+    while ming_num <= 0:
+        ming_num += 12
+    while ming_num > 12:
+        ming_num -= 12
+
+    return num_to_zhi.get(ming_num, '寅')
+
+
+def calculate_liunian(start_year, count=10):
+    """
+    计算未来若干年的流年干支。
+
+    Args:
+        start_year (int): 起始流年年份
+        count (int): 返回年数
+
+    Returns:
+        list: 每年 [年份, 干支]
+    """
+    liunian = []
+    for y in range(start_year, start_year + count):
+        # 用公式计算年干支：(年份 - 3) % 60
+        gz_index = (y - 3) % 60
+        if gz_index == 0:
+            gz_index = 60
+        liunian.append({'year': y, 'ganzhi': GANZHI_60[gz_index - 1]})
+    return liunian
+
+
 def bazi_paipan(year, month, day, hour, gender='男', location=''):
     """
     子平术（传统主流）八字排盘。
@@ -516,12 +670,14 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
 
         gan_wx, gan_yy = TIANGAN_WUXING_YINYANG[gan]
         zhi_wx, zhi_yy = DIZHI_WUXING_YINYANG[zhi]
+        main_shishen = get_shishen(day_master, gan)
 
         pillar = {
             'position': position,
             'gan': gan,
             'zhi': zhi,
-            'shishen': get_shishen(day_master, gan),
+            'shishen': main_shishen,
+            'liuqin': get_liuqin(main_shishen, gender),
             'gan_wuxing': gan_wx,
             'gan_yinyang': gan_yy,
             'zhi_wuxing': zhi_wx,
@@ -535,9 +691,29 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         }
         pillars.append(pillar)
 
-    pattern = determine_pattern(gz['month'], gz['year'], gz['hour'])
+    pattern = determine_pattern(day_master, gz['month'], gz['year'], gz['hour'])
     yong_ji = determine_yong_ji(day_master, gz['month'], day_master, gz['year'], gz['hour'])
     daxun = calculate_daxun(gz['year'], gender)
+
+    # 全局性日柱/时柱神煞
+    global_shensha = get_global_shensha(gz['day'], year_gan)
+    if get_ri_gui(gz['day']):
+        global_shensha.append('日贵')
+    if get_ri_de(gz['day']):
+        global_shensha.append('日德')
+    if get_kuigang(gz['day']):
+        global_shensha.append('魁罡')
+    if get_ri_ren(gz['day']):
+        global_shensha.append('日刃')
+    if get_jinshen(gz['hour']):
+        global_shensha.append('时上金神')
+    if get_yangren_by_gan(day_master, day_zhi):
+        global_shensha.append('阳刃')
+
+    # 胎元、命宫、流年
+    taiyuan = get_taiyuan(gz['year'], gz['month'])
+    minggong = get_minggong(gz['month'][1], gz['hour'][1])
+    liunian = calculate_liunian(year, 12)
 
     result = {
         'method': '子平术（传统主流）',
@@ -552,7 +728,10 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         'is_strong': yong_ji['is_strong'],
         'daxun': daxun,
         'kongwang': kongwang_list,
-        'global_shensha': get_global_shensha(gz['day'], year_gan),
+        'global_shensha': global_shensha,
+        'taiyuan': taiyuan,
+        'minggong': minggong,
+        'liunian': liunian,
         'gender': gender,
         'location': location,
         'true_solar_time': time_info

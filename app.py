@@ -8,14 +8,28 @@ app = Flask(__name__)
 
 @app.route('/api/feipan', methods=['POST'])
 def api_feipan():
+    """
+    飞盘置闰法排盘接口。
+
+    请求参数:
+        year (int): 年份
+        month (int): 月份
+        day (int): 日期
+        hour (int): 小时（0-23）
+        location (str, optional): 出生地，用于真太阳时校准
+
+    响应:
+        JSON 排盘结果，包含 true_solar_time 字段说明是否经过真太阳时校准
+    """
     data = request.get_json()
     year = data.get('year')
     month = data.get('month')
     day = data.get('day')
     hour = data.get('hour')
-    
+    location = data.get('location', '')
+
     try:
-        result = feipan_zirun(year, month, day, hour)
+        result = feipan_zirun(year, month, day, hour, location)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -23,14 +37,28 @@ def api_feipan():
 
 @app.route('/api/mingfa', methods=['POST'])
 def api_mingfa():
+    """
+    鸣法奇门排盘接口。
+
+    请求参数:
+        year (int): 年份
+        month (int): 月份
+        day (int): 日期
+        hour (int): 小时（0-23）
+        location (str, optional): 出生地，用于真太阳时校准
+
+    响应:
+        JSON 排盘结果，包含 true_solar_time 字段说明是否经过真太阳时校准
+    """
     data = request.get_json()
     year = data.get('year')
     month = data.get('month')
     day = data.get('day')
     hour = data.get('hour')
-    
+    location = data.get('location', '')
+
     try:
-        result = mingfa_qimen(year, month, day, hour)
+        result = mingfa_qimen(year, month, day, hour, location)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500

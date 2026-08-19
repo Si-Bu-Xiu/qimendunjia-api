@@ -1,13 +1,33 @@
 from .core import *
+from .location import apply_true_solar_time
 
 
-def feipan_zirun(year, month, day, hour):
+def feipan_zirun(year, month, day, hour, location=''):
+    """
+    飞盘置闰法排盘。
+
+    Args:
+        year (int): 年份
+        month (int): 月份
+        day (int): 日期
+        hour (int): 小时（0-23）
+        location (str, optional): 出生地，用于真太阳时校准
+
+    Returns:
+        dict: 排盘结果，包含 date、ganzhi、dun_info、palaces、true_solar_time 等字段
+    """
+    # 应用真太阳时校准
+    time_info = apply_true_solar_time(year, month, day, hour, location)
+    adj = time_info['adjusted']
+    year, month, day, hour = adj['year'], adj['month'], adj['day'], adj['hour']
+
     result = {
         'method': '飞盘置闰法',
         'date': {'year': year, 'month': month, 'day': day, 'hour': hour},
         'ganzhi': {},
         'dun_info': {},
-        'palaces': []
+        'palaces': [],
+        'true_solar_time': time_info
     }
 
     year_gz, month_gz, day_gz = get_ganzhi(year, month, day)

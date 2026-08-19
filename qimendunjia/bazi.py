@@ -1,5 +1,6 @@
 import sxtwl
 from .core import TIANGAN, DIZHI
+from .location import apply_true_solar_time
 
 
 SHI_SHEN = {
@@ -253,6 +254,25 @@ def get_yi_ma(year_zhi, day_zhi):
 
 
 def bazi_paipan(year, month, day, hour, gender='男', location=''):
+    """
+    子平术（传统主流）八字排盘。
+
+    Args:
+        year (int): 出生年份
+        month (int): 出生月份
+        day (int): 出生日期
+        hour (int): 出生小时（0-23）
+        gender (str, optional): 性别，'男' 或 '女'
+        location (str, optional): 出生地，用于真太阳时校准
+
+    Returns:
+        dict: 子平术排盘结果，包含四柱、藏干、十神、格局、用神忌神、大运、神煞及真太阳时信息
+    """
+    # 应用真太阳时校准
+    time_info = apply_true_solar_time(year, month, day, hour, location)
+    adj = time_info['adjusted']
+    year, month, day, hour = adj['year'], adj['month'], adj['day'], adj['hour']
+
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
 
@@ -310,13 +330,33 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
             'yi_ma': yi_ma_list
         },
         'gender': gender,
-        'location': location
+        'location': location,
+        'true_solar_time': time_info
     }
 
     return result
 
 
 def xinpai_paipan(year, month, day, hour, gender='男', location=''):
+    """
+    新派命理八字排盘。
+
+    Args:
+        year (int): 出生年份
+        month (int): 出生月份
+        day (int): 出生日期
+        hour (int): 出生小时（0-23）
+        gender (str, optional): 性别，'男' 或 '女'
+        location (str, optional): 出生地，用于真太阳时校准
+
+    Returns:
+        dict: 新派命理排盘结果，包含四柱、十神、旺衰、空亡、作用关系、大运及真太阳时信息
+    """
+    # 应用真太阳时校准
+    time_info = apply_true_solar_time(year, month, day, hour, location)
+    adj = time_info['adjusted']
+    year, month, day, hour = adj['year'], adj['month'], adj['day'], adj['hour']
+
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
 
@@ -419,7 +459,8 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
         'interactions': interactions,
         'daxun': daxun,
         'gender': gender,
-        'location': location
+        'location': location,
+        'true_solar_time': time_info
     }
 
     return result
@@ -729,6 +770,25 @@ def _大限(wuxing局, mingong_zhi, gender, lunar_year_gan):
 
 
 def ziwei_paipan(year, month, day, hour, gender='男', location=''):
+    """
+    紫微斗数排盘。
+
+    Args:
+        year (int): 出生年份
+        month (int): 出生月份（公历）
+        day (int): 出生日期（公历）
+        hour (int): 出生小时（0-23）
+        gender (str, optional): 性别，'男' 或 '女'
+        location (str, optional): 出生地，用于真太阳时校准
+
+    Returns:
+        dict: 紫微斗数排盘结果，包含十二宫、主星、辅星、四化、长生、大限及真太阳时信息
+    """
+    # 应用真太阳时校准
+    time_info = apply_true_solar_time(year, month, day, hour, location)
+    adj = time_info['adjusted']
+    year, month, day, hour = adj['year'], adj['month'], adj['day'], adj['hour']
+
     lunar_year, lunar_month, lunar_day, lunar_hour = _get_lunar_date(year, month, day, hour)
 
     d = sxtwl.fromSolar(year, month, day)
@@ -798,7 +858,8 @@ def ziwei_paipan(year, month, day, hour, gender='男', location=''):
         'palaces': palaces,
         'daxun': daxun,
         'gender': gender,
-        'location': location
+        'location': location,
+        'true_solar_time': time_info
     }
 
     return result

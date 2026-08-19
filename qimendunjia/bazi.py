@@ -77,6 +77,62 @@ DAY_MASTER_TYPE = {'甲': '阳', '丙': '阳', '戊': '阳', '庚': '阳', '壬'
                    '乙': '阴', '丁': '阴', '己': '阴', '辛': '阴', '癸': '阴'}
 
 
+# 天干五行与阴阳（严格按子平术.md定义）
+TIANGAN_WUXING_YINYANG = {
+    '甲': ('木', '阳'), '乙': ('木', '阴'),
+    '丙': ('火', '阳'), '丁': ('火', '阴'),
+    '戊': ('土', '阳'), '己': ('土', '阴'),
+    '庚': ('金', '阳'), '辛': ('金', '阴'),
+    '壬': ('水', '阳'), '癸': ('水', '阴'),
+}
+
+
+# 地支五行与阴阳（严格按子平术.md定义）
+DIZHI_WUXING_YINYANG = {
+    '子': ('水', '阳'), '丑': ('土', '阴'),
+    '寅': ('木', '阳'), '卯': ('木', '阴'),
+    '辰': ('土', '阳'), '巳': ('火', '阴'),
+    '午': ('火', '阳'), '未': ('土', '阴'),
+    '申': ('金', '阳'), '酉': ('金', '阴'),
+    '戌': ('土', '阳'), '亥': ('水', '阴'),
+}
+
+
+# 六十甲子纳音五行表
+NAYIN_WUXING = {
+    '甲子': '海中金', '乙丑': '海中金',
+    '丙寅': '炉中火', '丁卯': '炉中火',
+    '戊辰': '大林木', '己巳': '大林木',
+    '庚午': '路旁土', '辛未': '路旁土',
+    '壬申': '剑锋金', '癸酉': '剑锋金',
+    '甲戌': '山头火', '乙亥': '山头火',
+    '丙子': '涧下水', '丁丑': '涧下水',
+    '戊寅': '城头土', '己卯': '城头土',
+    '庚辰': '白蜡金', '辛巳': '白蜡金',
+    '壬午': '杨柳木', '癸未': '杨柳木',
+    '甲申': '泉中水', '乙酉': '泉中水',
+    '丙戌': '屋上土', '丁亥': '屋上土',
+    '戊子': '霹雳火', '己丑': '霹雳火',
+    '庚寅': '松柏木', '辛卯': '松柏木',
+    '壬辰': '长流水', '癸巳': '长流水',
+    '甲午': '沙中金', '乙未': '沙中金',
+    '丙申': '山下火', '丁酉': '山下火',
+    '戊戌': '平地木', '己亥': '平地木',
+    '庚子': '壁上土', '辛丑': '壁上土',
+    '壬寅': '金箔金', '癸卯': '金箔金',
+    '甲辰': '覆灯火', '乙巳': '覆灯火',
+    '丙午': '天河水', '丁未': '天河水',
+    '戊申': '大驿土', '己酉': '大驿土',
+    '庚戌': '钗钏金', '辛亥': '钗钏金',
+    '壬子': '桑柘木', '癸丑': '桑柘木',
+    '甲寅': '大溪水', '乙卯': '大溪水',
+    '丙辰': '沙中土', '丁巳': '沙中土',
+    '戊午': '天上火', '己未': '天上火',
+    '庚申': '石榴木', '辛酉': '石榴木',
+    '壬戌': '大海水', '癸亥': '大海水',
+}
+
+
 def gz_to_str(gz):
     return TIANGAN[gz.tg] + DIZHI[gz.dz]
 
@@ -253,6 +309,175 @@ def get_yi_ma(year_zhi, day_zhi):
     return {'year_ma': year_ma, 'day_ma': day_ma}
 
 
+def get_dishi(day_gan, zhi):
+    """
+    计算日主在某一地支的十二长生状态（地势）。
+
+    阳干顺行，阴干逆行，以长生地支为起点。
+    """
+    start_zhi = SHI_ER_SHEN_GAN_START[day_gan]
+    start_idx = DIZHI.index(start_zhi)
+    zhi_idx = DIZHI.index(zhi)
+
+    if DAY_MASTER_TYPE[day_gan] == '阳':
+        offset = (zhi_idx - start_idx) % 12
+    else:
+        offset = (start_idx - zhi_idx) % 12
+
+    return SHI_ER_SHEN[day_gan][offset]
+
+
+def get_nayin(ganzhi):
+    """根据干支组合查询纳音五行。"""
+    return NAYIN_WUXING.get(ganzhi, '')
+
+
+def get_taohua(day_zhi):
+    """以日支查桃花。"""
+    taohua_map = {'申': '酉', '子': '酉', '辰': '酉',
+                  '寅': '卯', '午': '卯', '戌': '卯',
+                  '巳': '午', '酉': '午', '丑': '午',
+                  '亥': '子', '卯': '子', '未': '子'}
+    return taohua_map.get(day_zhi, '')
+
+
+def get_huagai(day_zhi):
+    """以日支查华盖。"""
+    huagai_map = {'申': '辰', '子': '辰', '辰': '辰',
+                  '寅': '戌', '午': '戌', '戌': '戌',
+                  '巳': '丑', '酉': '丑', '丑': '丑',
+                  '亥': '未', '卯': '未', '未': '未'}
+    return huagai_map.get(day_zhi, '')
+
+
+def get_tianxi(year_zhi):
+    """以年支查天喜。"""
+    tianxi_map = {'子': '酉', '丑': '申', '寅': '未', '卯': '午',
+                  '辰': '巳', '巳': '辰', '午': '卯', '未': '寅',
+                  '申': '丑', '酉': '子', '戌': '亥', '亥': '戌'}
+    return tianxi_map.get(year_zhi, '')
+
+
+def get_hongluan(year_zhi):
+    """以年支查红鸾。"""
+    hongluan_map = {'子': '卯', '丑': '寅', '寅': '丑', '卯': '子',
+                    '辰': '亥', '巳': '戌', '午': '酉', '未': '申',
+                    '申': '未', '酉': '午', '戌': '巳', '亥': '辰'}
+    return hongluan_map.get(year_zhi, '')
+
+
+def get_yuede(day_gan):
+    """以日干或年干查月德贵人。"""
+    yuede_map = {'甲': '寅', '乙': '申', '丙': '寅', '丁': '申',
+                 '戊': '寅', '己': '申', '庚': '寅', '辛': '申',
+                 '壬': '寅', '癸': '申'}
+    return yuede_map.get(day_gan, '')
+
+
+def get_yangren(day_gan):
+    """以日干查羊刃。"""
+    yangren_map = {'甲': '卯', '乙': '寅', '丙': '午', '丁': '巳',
+                   '戊': '午', '己': '巳', '庚': '酉', '辛': '申',
+                   '壬': '子', '癸': '亥'}
+    return yangren_map.get(day_gan, '')
+
+
+def get_hongyan(day_gan):
+    """以日干查红艳煞。"""
+    hongyan_map = {'甲': '午', '乙': '申', '丙': '寅', '丁': '未',
+                   '戊': '辰', '己': '辰', '庚': '戌', '辛': '酉',
+                   '壬': '子', '癸': '申'}
+    return hongyan_map.get(day_gan, '')
+
+
+def get_feiren(day_gan):
+    """以日干查飞刃（羊刃对冲）。"""
+    yangren = get_yangren(day_gan)
+    if not yangren:
+        return ''
+    # 地支六冲
+    chong_map = {'子': '午', '午': '子', '丑': '未', '未': '丑',
+                 '寅': '申', '申': '寅', '卯': '酉', '酉': '卯',
+                 '辰': '戌', '戌': '辰', '巳': '亥', '亥': '巳'}
+    return chong_map.get(yangren, '')
+
+
+def get_guluan(day_gz):
+    """查孤鸾煞（特定日柱）。"""
+    guluan_list = ['乙巳', '丁巳', '辛亥', '戊申', '壬寅', '戊午', '壬子', '丙午']
+    return day_gz in guluan_list
+
+
+def get_shiling(day_gz):
+    """查十灵日（特定日柱）。"""
+    shiling_list = ['甲辰', '乙亥', '丙辰', '丁酉', '戊午', '庚戌', '庚寅', '辛亥', '壬寅', '癸未']
+    return day_gz in shiling_list
+
+
+def get_pillar_shensha(pillar_zhi, day_gan, day_zhi, year_zhi, year_gan, day_gz):
+    """
+    综合计算某一柱地支所带的神煞标记。
+
+    包括：天乙贵人、驿马、桃花、华盖、天喜、红鸾、月德贵人、羊刃、红艳、飞刃。
+    以及全局性神煞：孤鸾煞、十灵日（仅在日柱显示）。
+    """
+    shensha = []
+
+    # 天乙贵人（日干查）
+    tianyi = get_tianyi_gui(day_gan)
+    if pillar_zhi in tianyi:
+        shensha.append('天乙贵人')
+
+    # 驿马（年支/日支查）
+    yi_ma_info = get_yi_ma(year_zhi, day_zhi)
+    if pillar_zhi in yi_ma_info.values():
+        shensha.append('驿马')
+
+    # 桃花（日支查）
+    if pillar_zhi == get_taohua(day_zhi):
+        shensha.append('桃花')
+
+    # 华盖（日支查）
+    if pillar_zhi == get_huagai(day_zhi):
+        shensha.append('华盖')
+
+    # 天喜（年支查）
+    if pillar_zhi == get_tianxi(year_zhi):
+        shensha.append('天喜')
+
+    # 红鸾（年支查）
+    if pillar_zhi == get_hongluan(year_zhi):
+        shensha.append('红鸾')
+
+    # 月德贵人（年干查）
+    if pillar_zhi == get_yuede(year_gan):
+        shensha.append('月德贵人')
+
+    # 羊刃（日干查）
+    if pillar_zhi == get_yangren(day_gan):
+        shensha.append('羊刃')
+
+    # 红艳（日干查）
+    if pillar_zhi == get_hongyan(day_gan):
+        shensha.append('红艳')
+
+    # 飞刃（日干查，羊刃对冲）
+    if pillar_zhi == get_feiren(day_gan):
+        shensha.append('飞刃')
+
+    return shensha
+
+
+def get_global_shensha(day_gz, year_gan):
+    """获取全局性神煞标记（在日柱显示）。"""
+    global_shensha = []
+    if get_guluan(day_gz):
+        global_shensha.append('孤鸾煞')
+    if get_shiling(day_gz):
+        global_shensha.append('十灵日')
+    return global_shensha
+
+
 def bazi_paipan(year, month, day, hour, gender='男', location=''):
     """
     子平术（传统主流）八字排盘。
@@ -275,12 +500,11 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
 
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
+    day_zhi = gz['day'][1]
+    year_gan = gz['year'][0]
+    year_zhi = gz['year'][1]
 
-    # 日干查天乙贵人（看哪些地支是贵人）
-    tianyi_gui = get_tianyi_gui(day_master)
-    # 年支、日支查驿马
-    yi_ma_info = get_yi_ma(gz['year'][1], gz['day'][1])
-    yi_ma_list = [v for v in yi_ma_info.values() if v]
+    kongwang_list = get_kongwang(gz['day'])
 
     pillars = []
     for position in ['year', 'month', 'day', 'hour']:
@@ -288,23 +512,26 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         gan = gz_str[0]
         zhi = gz_str[1]
         cang = CANG_GAN[zhi]
-        shishen_list = [get_shishen(day_master, cg) for cg in cang]
+        cang_shishen = [get_shishen(day_master, cg) for cg in cang]
 
-        # 该地支的神煞标记
-        pillar_shensha = []
-        if zhi in tianyi_gui:
-            pillar_shensha.append('天乙贵人')
-        if zhi in yi_ma_list:
-            pillar_shensha.append('驿马')
+        gan_wx, gan_yy = TIANGAN_WUXING_YINYANG[gan]
+        zhi_wx, zhi_yy = DIZHI_WUXING_YINYANG[zhi]
 
         pillar = {
             'position': position,
             'gan': gan,
             'zhi': zhi,
             'shishen': get_shishen(day_master, gan),
+            'gan_wuxing': gan_wx,
+            'gan_yinyang': gan_yy,
+            'zhi_wuxing': zhi_wx,
+            'zhi_yinyang': zhi_yy,
             'canggan': cang,
-            'canggan_shishen': shishen_list,
-            'shensha': pillar_shensha
+            'canggan_shishen': cang_shishen,
+            'dishi': get_dishi(day_master, zhi),
+            'nayin': get_nayin(gz_str),
+            'kongwang': zhi in kongwang_list,
+            'shensha': get_pillar_shensha(zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'])
         }
         pillars.append(pillar)
 
@@ -324,11 +551,8 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         'ji_shen': yong_ji['ji'],
         'is_strong': yong_ji['is_strong'],
         'daxun': daxun,
-        'shishen': [get_shishen(day_master, gz[p][0]) for p in ['year', 'month', 'day', 'hour']],
-        'shensha': {
-            'tianyi_gui': tianyi_gui,
-            'yi_ma': yi_ma_list
-        },
+        'kongwang': kongwang_list,
+        'global_shensha': get_global_shensha(gz['day'], year_gan),
         'gender': gender,
         'location': location,
         'true_solar_time': time_info
@@ -359,6 +583,9 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
 
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
+    day_zhi = gz['day'][1]
+    year_gan = gz['year'][0]
+    year_zhi = gz['year'][1]
 
     kongwang = get_kongwang(gz['day'])
 
@@ -367,14 +594,27 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
         gz_str = gz[position]
         gan = gz_str[0]
         zhi = gz_str[1]
-        shishen = get_shishen(day_master, gan)
+        cang = CANG_GAN[zhi]
+        cang_shishen = [get_shishen(day_master, cg) for cg in cang]
+
+        gan_wx, gan_yy = TIANGAN_WUXING_YINYANG[gan]
+        zhi_wx, zhi_yy = DIZHI_WUXING_YINYANG[zhi]
 
         pillar = {
             'position': position,
             'gan': gan,
             'zhi': zhi,
-            'shishen': shishen,
-            'is_kongwang': zhi in kongwang
+            'shishen': get_shishen(day_master, gan),
+            'gan_wuxing': gan_wx,
+            'gan_yinyang': gan_yy,
+            'zhi_wuxing': zhi_wx,
+            'zhi_yinyang': zhi_yy,
+            'canggan': cang,
+            'canggan_shishen': cang_shishen,
+            'dishi': get_dishi(day_master, zhi),
+            'nayin': get_nayin(gz_str),
+            'is_kongwang': zhi in kongwang,
+            'shensha': get_pillar_shensha(zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'])
         }
         pillars.append(pillar)
 

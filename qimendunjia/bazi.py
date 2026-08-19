@@ -350,6 +350,147 @@ def get_nayin(ganzhi):
     return NAYIN_WUXING.get(ganzhi, '')
 
 
+# ============== 年柱神煞 ==============
+
+def get_taisui(year_zhi):
+    """太岁，即年支本身。"""
+    return year_zhi
+
+
+def get_suijian(year_zhi):
+    """岁建，与太岁同，即年支本身。"""
+    return year_zhi
+
+
+def get_qinglong(year_zhi):
+    """
+    青龙（年支起十二神煞之一）。
+
+    十二神煞顺序：青龙、明堂、天刑、朱雀、金匮、天德、白虎、玉堂、天牢、玄武、司命、勾陈。
+    起法：以年支起青龙，按十二地支顺排。
+    """
+    qinglong_start = {'子': '辰', '丑': '卯', '寅': '寅', '卯': '丑',
+                      '辰': '子', '巳': '亥', '午': '戌', '未': '酉',
+                      '申': '申', '酉': '未', '戌': '午', '亥': '巳'}
+    return qinglong_start.get(year_zhi, '')
+
+
+def get_mingtang(year_zhi):
+    """
+    明堂（年支起十二神煞之二）。
+
+    青龙顺排下一位即为明堂。
+    """
+    qinglong = get_qinglong(year_zhi)
+    if not qinglong:
+        return ''
+    idx = DIZHI.index(qinglong)
+    return DIZHI[(idx + 1) % 12]
+
+
+# ============== 月柱神煞 ==============
+
+def get_tiande(month_zhi):
+    """
+    天德贵人（以月支查）。
+
+    寅月丁、卯月申、辰月壬、巳月辛、午月甲、未月癸、
+    申月寅、酉月丙、戌月乙、亥月辛、子月庚、丑月辛。
+    """
+    tiande_map = {'寅': '丁', '卯': '申', '辰': '壬', '巳': '辛',
+                  '午': '甲', '未': '癸', '申': '寅', '酉': '丙',
+                  '戌': '乙', '亥': '辛', '子': '庚', '丑': '辛'}
+    return tiande_map.get(month_zhi, '')
+
+
+def get_tiandehe(month_zhi):
+    """天德合：与天德相合的天干。"""
+    tiande = get_tiande(month_zhi)
+    if not tiande:
+        return ''
+    he_map = {'甲': '己', '己': '甲', '乙': '庚', '庚': '乙',
+              '丙': '辛', '辛': '丙', '丁': '壬', '壬': '丁',
+              '戊': '癸', '癸': '戊'}
+    return he_map.get(tiande, '')
+
+
+def get_yuede_by_month(month_zhi):
+    """
+    月德贵人（以月支查）。
+
+    寅午戌月丙，亥卯未月甲，申子辰月壬，巳酉丑月庚。
+    """
+    yuede_map = {'寅': '丙', '卯': '甲', '辰': '壬',
+                 '巳': '庚', '午': '丙', '未': '甲',
+                 '申': '壬', '酉': '庚', '戌': '丙',
+                 '亥': '甲', '子': '壬', '丑': '庚'}
+    return yuede_map.get(month_zhi, '')
+
+
+def get_yuedehe(month_zhi):
+    """月德合：与月德相合的天干。"""
+    yuede = get_yuede_by_month(month_zhi)
+    if not yuede:
+        return ''
+    he_map = {'甲': '己', '己': '甲', '乙': '庚', '庚': '乙',
+              '丙': '辛', '辛': '丙', '丁': '壬', '壬': '丁',
+              '戊': '癸', '癸': '戊'}
+    return he_map.get(yuede, '')
+
+
+# ============== 日柱神煞 ==============
+
+def get_fuxing(day_gan):
+    """
+    福星贵人（以日干查）。
+
+    甲丙相邀入虎乡，更游鼠穴最高强，戊猴己未丁宜亥，
+    乙癸逢牛卯禄昌，庚赶马头辛到巳，壬骑龙背喜非常。
+    """
+    fuxing_map = {'甲': '寅', '乙': '丑', '丙': '寅', '丁': '亥',
+                  '戊': '申', '己': '未', '庚': '午', '辛': '巳',
+                  '壬': '辰', '癸': '丑'}
+    return fuxing_map.get(day_gan, '')
+
+
+def get_wenchang(day_gan):
+    """
+    文昌贵人（以日干查）。
+
+    甲乙巳午报君知，丙戊申宫丁己鸡，庚猪辛鼠壬逢虎，癸人见卯入云梯。
+    """
+    wenchang_map = {'甲': '巳', '乙': '午', '丙': '申', '丁': '酉',
+                    '戊': '申', '己': '酉', '庚': '亥', '辛': '子',
+                    '壬': '寅', '癸': '卯'}
+    return wenchang_map.get(day_gan, '')
+
+
+# ============== 时柱神煞 ==============
+
+def get_xuetang(day_gan):
+    """
+    学堂（以日干五行查长生之地）。
+
+    金命见巳，木命见亥，水命见申，火命见寅，土命见申。
+    """
+    xuetang_map = {'甲': '亥', '乙': '亥', '丙': '寅', '丁': '寅',
+                   '戊': '申', '己': '申', '庚': '巳', '辛': '巳',
+                   '壬': '申', '癸': '申'}
+    return xuetang_map.get(day_gan, '')
+
+
+def get_ciguan(day_gan):
+    """
+    词馆（以日干五行查临官之地）。
+
+    甲乙见寅，丙丁戊己见巳，庚辛见申，壬癸见亥。
+    """
+    ciguan_map = {'甲': '寅', '乙': '寅', '丙': '巳', '丁': '巳',
+                  '戊': '巳', '己': '巳', '庚': '申', '辛': '申',
+                  '壬': '亥', '癸': '亥'}
+    return ciguan_map.get(day_gan, '')
+
+
 def get_taohua(day_zhi):
     """以日支查桃花。"""
     taohua_map = {'申': '酉', '子': '酉', '辰': '酉',
@@ -432,15 +573,29 @@ def get_shiling(day_gz):
     return day_gz in shiling_list
 
 
-def get_pillar_shensha(pillar_zhi, day_gan, day_zhi, year_zhi, year_gan, day_gz):
+def get_pillar_shensha(pillar_gan, pillar_zhi, day_gan, day_zhi, year_zhi, year_gan, day_gz, month_zhi, position):
     """
-    综合计算某一柱地支所带的神煞标记。
+    综合计算某一柱所带的神煞标记。
 
-    包括：天乙贵人、驿马、桃花、华盖、天喜、红鸾、月德贵人、羊刃、红艳、飞刃。
-    以及全局性神煞：孤鸾煞、十灵日（仅在日柱显示）。
+    按《渊海子平》及传统子平术规则，分柱位补充年、月、日、时四柱专属神煞。
+
+    Args:
+        pillar_gan (str): 该柱天干
+        pillar_zhi (str): 该柱地支
+        day_gan (str): 日干
+        day_zhi (str): 日支
+        year_zhi (str): 年支
+        year_gan (str): 年干
+        day_gz (str): 日柱干支
+        month_zhi (str): 月支
+        position (str): 柱位 'year'/'month'/'day'/'hour'
+
+    Returns:
+        list: 该柱所带神煞名称列表
     """
     shensha = []
 
+    # ===== 通用神煞（所有柱位均可查） =====
     # 天乙贵人（日干查）
     tianyi = get_tianyi_gui(day_gan)
     if pillar_zhi in tianyi:
@@ -467,21 +622,66 @@ def get_pillar_shensha(pillar_zhi, day_gan, day_zhi, year_zhi, year_gan, day_gz)
     if pillar_zhi == get_hongluan(year_zhi):
         shensha.append('红鸾')
 
-    # 月德贵人（年干查）
-    if pillar_zhi == get_yuede(year_gan):
-        shensha.append('月德贵人')
+    # 红艳（日干查）
+    if pillar_zhi == get_hongyan(day_gan):
+        shensha.append('红艳')
 
     # 羊刃（日干查）
     if pillar_zhi == get_yangren(day_gan):
         shensha.append('羊刃')
 
-    # 红艳（日干查）
-    if pillar_zhi == get_hongyan(day_gan):
-        shensha.append('红艳')
-
     # 飞刃（日干查，羊刃对冲）
     if pillar_zhi == get_feiren(day_gan):
         shensha.append('飞刃')
+
+    # ===== 年柱专属神煞 =====
+    if position == 'year':
+        if pillar_zhi == get_taisui(year_zhi):
+            shensha.append('太岁')
+        if pillar_zhi == get_suijian(year_zhi):
+            shensha.append('岁建')
+        if pillar_zhi == get_qinglong(year_zhi):
+            shensha.append('青龙')
+        if pillar_zhi == get_mingtang(year_zhi):
+            shensha.append('明堂')
+
+    # ===== 月柱专属神煞 =====
+    if position == 'month':
+        tiande = get_tiande(month_zhi)
+        tiandehe = get_tiandehe(month_zhi)
+        yuede = get_yuede_by_month(month_zhi)
+        yuedehe = get_yuedehe(month_zhi)
+
+        # 天德贵人：月柱天干或年干见天德天干
+        if pillar_gan == tiande or year_gan == tiande:
+            shensha.append('天德')
+        # 天德合：月柱天干或年干见天德合天干
+        if pillar_gan == tiandehe or year_gan == tiandehe:
+            shensha.append('天德合')
+        # 月德贵人：月柱天干或年干见月德天干
+        if pillar_gan == yuede or year_gan == yuede:
+            shensha.append('月德')
+        # 月德合：月柱天干或年干见月德合天干
+        if pillar_gan == yuedehe or year_gan == yuedehe:
+            shensha.append('月德合')
+
+    # ===== 日柱专属神煞 =====
+    if position == 'day':
+        # 福星贵人
+        if pillar_zhi == get_fuxing(day_gan):
+            shensha.append('福星贵人')
+        # 文昌贵人
+        if pillar_zhi == get_wenchang(day_gan):
+            shensha.append('文昌贵人')
+
+    # ===== 时柱专属神煞 =====
+    if position == 'hour':
+        # 学堂
+        if pillar_zhi == get_xuetang(day_gan):
+            shensha.append('学堂')
+        # 词馆
+        if pillar_zhi == get_ciguan(day_gan):
+            shensha.append('词馆')
 
     return shensha
 
@@ -693,7 +893,7 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
             'dishi': get_dishi(day_master, zhi),
             'nayin': get_nayin(gz_str),
             'kongwang': zhi in kongwang_list,
-            'shensha': get_pillar_shensha(zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'])
+            'shensha': get_pillar_shensha(gan, zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'], gz['month'][1], position)
         }
         pillars.append(pillar)
 
@@ -799,7 +999,7 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
             'dishi': get_dishi(day_master, zhi),
             'nayin': get_nayin(gz_str),
             'is_kongwang': zhi in kongwang,
-            'shensha': get_pillar_shensha(zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'])
+            'shensha': get_pillar_shensha(gan, zhi, day_master, day_zhi, year_zhi, year_gan, gz['day'], gz['month'][1], position)
         }
         pillars.append(pillar)
 

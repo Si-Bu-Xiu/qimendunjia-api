@@ -240,27 +240,27 @@ def get_tianyi_gui(day_gan):
     return []
 
 
-def get_yi_ma(zhi_list):
-    shenzi = ['申', '子', '辰']
-    yinwu = ['寅', '午', '戌']
-    sanchou = ['巳', '酉', '丑']
-    haimao = ['亥', '卯', '未']
-
+def get_yi_ma(year_zhi, day_zhi):
+    """以年支和日支查驿马"""
     yi_ma_map = {'申': '寅', '子': '寅', '辰': '寅',
                  '寅': '申', '午': '申', '戌': '申',
                  '巳': '亥', '酉': '亥', '丑': '亥',
                  '亥': '巳', '卯': '巳', '未': '巳'}
 
-    result = []
-    for z in zhi_list:
-        if z in yi_ma_map:
-            result.append(yi_ma_map[z])
-    return result
+    year_ma = yi_ma_map.get(year_zhi, '')
+    day_ma = yi_ma_map.get(day_zhi, '')
+    return {'year_ma': year_ma, 'day_ma': day_ma}
 
 
 def bazi_paipan(year, month, day, hour, gender='男', location=''):
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
+
+    # 日干查天乙贵人（看哪些地支是贵人）
+    tianyi_gui = get_tianyi_gui(day_master)
+    # 年支、日支查驿马
+    yi_ma_info = get_yi_ma(gz['year'][1], gz['day'][1])
+    yi_ma_list = [v for v in yi_ma_info.values() if v]
 
     pillars = []
     for position in ['year', 'month', 'day', 'hour']:
@@ -270,23 +270,27 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         cang = CANG_GAN[zhi]
         shishen_list = [get_shishen(day_master, cg) for cg in cang]
 
+        # 该地支的神煞标记
+        pillar_shensha = []
+        if zhi in tianyi_gui:
+            pillar_shensha.append('天乙贵人')
+        if zhi in yi_ma_list:
+            pillar_shensha.append('驿马')
+
         pillar = {
             'position': position,
             'gan': gan,
             'zhi': zhi,
             'shishen': get_shishen(day_master, gan),
             'canggan': cang,
-            'canggan_shishen': shishen_list
+            'canggan_shishen': shishen_list,
+            'shensha': pillar_shensha
         }
         pillars.append(pillar)
 
     pattern = determine_pattern(gz['month'], gz['year'], gz['hour'])
     yong_ji = determine_yong_ji(day_master, gz['month'], day_master, gz['year'], gz['hour'])
     daxun = calculate_daxun(gz['year'], gender)
-
-    all_zhi = [gz['year'][1], gz['month'][1], gz['hour'][1]]
-    tianyi = get_tianyi_gui(day_master)
-    yi_ma = get_yi_ma(all_zhi)
 
     result = {
         'method': '子平术（传统主流）',
@@ -302,8 +306,8 @@ def bazi_paipan(year, month, day, hour, gender='男', location=''):
         'daxun': daxun,
         'shishen': [get_shishen(day_master, gz[p][0]) for p in ['year', 'month', 'day', 'hour']],
         'shensha': {
-            'tianyi_gui': tianyi,
-            'yi_ma': yi_ma
+            'tianyi_gui': tianyi_gui,
+            'yi_ma': yi_ma_list
         },
         'gender': gender,
         'location': location
@@ -316,6 +320,8 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
     gz = get_bazi_ganzhi(year, month, day, hour)
     day_master = get_day_master(gz['day'])
 
+    kongwang = get_kongwang(gz['day'])
+
     pillars = []
     for position in ['year', 'month', 'day', 'hour']:
         gz_str = gz[position]
@@ -327,7 +333,8 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
             'position': position,
             'gan': gan,
             'zhi': zhi,
-            'shishen': shishen
+            'shishen': shishen,
+            'is_kongwang': zhi in kongwang
         }
         pillars.append(pillar)
 
@@ -378,23 +385,22 @@ def xinpai_paipan(year, month, day, hour, gender='男', location=''):
             else:
                 ji.append(g)
 
-    kongwang = get_kongwang(gz['day'])
-
     interactions = []
     positions = ['year', 'month', 'day', 'hour']
+    pos_names = {'year': '年', 'month': '月', 'day': '日', 'hour': '时'}
     for i in range(3):
         p1, p2 = positions[i], positions[i + 1]
         g1, g2 = gz[p1][0], gz[p2][0]
         w1, w2 = WU_XING[g1], WU_XING[g2]
 
         if WU_XING_SHENG.get(w1) == w2:
-            interactions.append({'from': p1, 'to': p2, 'type': '生', 'symbol': '→'})
+            interactions.append({'from': pos_names[p1], 'to': pos_names[p2], 'type': '生', 'symbol': '→'})
         elif WU_XING_KE.get(w1) == w2:
-            interactions.append({'from': p1, 'to': p2, 'type': '克', 'symbol': '×'})
+            interactions.append({'from': pos_names[p1], 'to': pos_names[p2], 'type': '克', 'symbol': '×'})
         elif WU_XING_SHENG.get(w2) == w1:
-            interactions.append({'from': p2, 'to': p1, 'type': '生', 'symbol': '←'})
+            interactions.append({'from': pos_names[p2], 'to': pos_names[p1], 'type': '生', 'symbol': '←'})
         elif WU_XING_KE.get(w2) == w1:
-            interactions.append({'from': p2, 'to': p1, 'type': '克', 'symbol': '×'})
+            interactions.append({'from': pos_names[p2], 'to': pos_names[p1], 'type': '克', 'symbol': '×'})
 
     daxun = calculate_daxun(gz['year'], gender)
 
